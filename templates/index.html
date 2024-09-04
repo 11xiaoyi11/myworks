@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Movies List</title>
+  <style>
+    /* 你的样式代码，保持不变 */
+    body,
+    html {
+      height: 100%;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    .header {
+      position: fixed;
+      top: 0;
+      right: 20px;
+      background: #f8f8f8;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      z-index: 1000;
+    }
+
+    .content {
+      display: flex;
+      position: relative;
+      overflow-y: auto;
+      padding-top: 80px;
+      width: 100%;
+      height: calc(100vh - 200px);
+      transition: left 0.3s ease;
+    }
+
+    .image-and-text {
+      display: flex;
+      align-items: center;
+      margin: 0 auto;
+    }
+
+    .image-and-text img {
+      max-width: 400px;
+      max-height: 300px;
+      height: auto;
+      margin-right: 20px;
+    }
+
+    .image-and-text .text-box {
+      flex-grow: 1;
+      margin-left: 20px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background: #fff;
+      max-width: 300px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .chat-box {
+      position: fixed;
+      top: 60px;
+      right: -380px;
+      width: 380px;
+      height: calc(97% - 80px);
+      background: #c2c2c2;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      transition: right 0.3s ease;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .chat-header {
+      padding: 5px;
+      background: #f8f8f8;
+      border-bottom: 1px solid #ddd;
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+      border-bottom-right-radius: 0px;
+      border-bottom-left-radius: 0px;
+    }
+
+    .chat-body {
+      flex: 1;
+      height: calc(100vh - 240px);
+      padding: 10px;
+      overflow-y: auto;
+      background: #fafafa;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .chat-input {
+      display: flex;
+      padding: 5px;
+      background: #f8f8f8;
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 10px;
+      border-bottom-left-radius: 10px;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin-right: 5px;
+    }
+
+    .chat-input button {
+      padding: 8px 15px;
+      background: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .chat-message {
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      max-width: 70%;
+      word-wrap: break-word;
+      clear: both;
+    }
+
+    .chat-message.mine {
+      background: #007bff;
+      color: #fff;
+      float: right;
+    }
+
+    .chat-message.theirs {
+      background: #e0e0e0;
+      float: left;
+    }
+
+    .clearfix::after {
+      content: "";
+      display: block;
+      clear: both;
+    }
+
+    .button-bar {
+      text-align: center;
+      position: relative;
+      margin-top: 20px;
+      transition: left 0.3s ease;
+    }
+
+    .button-bar button {
+      padding: 10px 20px;
+      margin: 0 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .marked {
+      background-color: green;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <button id="chatButton">Chat</button>
+  </div>
+  <div class="content">
+    <div class="image-and-text">
+      <img id="image" src="" alt="Image">
+      <div class="text-box">
+        <p id="text"></p>
+      </div>
+    </div>
+  </div>
+  <div class="button-bar">
+    <button class="button" onclick="previousImage()">上一张</button>
+    <button id="markButton" onclick="toggleMark()">看完啦</button>
+    <button class="button" onclick="nextImage()">下一张</button>
+  </div>
+
+  <div class="chat-box">
+    <div class="chat-header">聊天</div>
+    <div class="chat-body"></div>
+    <div class="chat-input">
+      <input type="text" placeholder="输入消息内容...">
+      <button>发送</button>
+    </div>
+  </div>
+
+  <script>
+
+    function createMessageElement(text, isMine) {
+      var message = document.createElement('div');
+      message.classList.add('chat-message');
+      if (isMine) {
+        message.classList.add('mine');
+        message.textContent = '我: ' + text;
+      } else {
+        message.classList.add('theirs');
+        message.textContent = '对方: ' + text;
+      }
+      return message;
+    }
+
+    function addMessageToChat(messageText, isMine) {
+      var chatBody = document.querySelector('.chat-body');
+      var message = createMessageElement(messageText, isMine);
+      chatBody.appendChild(message);
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    document.querySelector('.chat-input button').addEventListener('click', function () {
+      var input = document.querySelector('.chat-input input');
+      var messageText = input.value.trim();
+      if (messageText) {
+        addMessageToChat(messageText, true);
+        input.value = '';
+        sendToAIModel(messageText);
+      }
+    });
+
+    addMessageToChat('你好，很高兴认识你！', false);
+
+    function sendToAIModel(messageText) {
+      fetch('/ai_response', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ inputText: messageText }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.aiResponse) {
+            addMessageToChat(data.aiResponse, false);
+          }
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+        });
+    }
+
+    var currentIndex = 0;
+    var imagesData = [];
+
+    function loadMarkedStatus() {
+      imagesData.forEach(image => {
+        var markedStatus = localStorage.getItem('image_' + image.id);
+        if (markedStatus !== null) {
+          image.marked = markedStatus === 'true';
+        } else {
+          image.marked = false;
+        }
+      });
+    }
+
+    function saveMarkedStatus() {
+      imagesData.forEach(image => {
+        localStorage.setItem('image_' + image.id, image.marked);
+      });
+    }
+
+    function updateMarkButton() {
+      var button = document.getElementById("markButton");
+      if (imagesData[currentIndex].marked) {
+        button.classList.add("marked");
+        button.textContent = "取消标记";
+      } else {
+        button.classList.remove("marked");
+        button.textContent = "看完啦";
+      }
+    }
+
+    function toggleMark() {
+      imagesData[currentIndex].marked = !imagesData[currentIndex].marked;
+      saveMarkedStatus();
+      updateMarkButton();
+    }
+
+    function previousImage() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        updateImageAndText();
+      }
+    }
+
+    function nextImage() {
+      if (currentIndex < imagesData.length - 1) {
+        currentIndex++;
+        updateImageAndText();
+      }
+    }
+
+    function updateImageAndText() {
+      if (imagesData.length > 0) {
+        document.getElementById('image').src = imagesData[currentIndex].src;
+        document.getElementById('text').innerHTML = imagesData[currentIndex].text;
+        updateMarkButton();
+      }
+    }
+
+    fetch('/get-images-data')
+      .then(response => response.json())
+      .then(data => {
+        imagesData = data;
+        loadMarkedStatus();
+        updateImageAndText();
+      })
+      .catch(error => {
+        console.error('Error fetching images data:', error);
+      });
+
+    document.getElementById('chatButton').addEventListener('click', function () {
+      var chatBox = document.querySelector('.chat-box');
+      var content = document.querySelector('.content');
+      var button = document.querySelector('.button-bar');
+
+      content.style.left = content.style.left === '-15%' ? '0px' : '-15%';
+      button.style.left = button.style.left === '-15%' ? '0px' : '-15%';
+      chatBox.style.right = chatBox.style.right === '0px' ? '-400px' : '0px';
+    });
+  </script>
+
+</body>
+
+</html>
