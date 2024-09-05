@@ -1,4 +1,7 @@
 # README
+
+##其中scrapy文件中数据为了上传需要全部抹除，需要先运行“获取豆瓣Top250.py”爬取一些信息
+
 ### 作业文件结构如下：
 #### 作业movie_list v1.0    
 * movie_app.py  
